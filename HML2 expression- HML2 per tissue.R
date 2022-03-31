@@ -28,24 +28,25 @@ library("ggpubr")
 library(gridExtra)
 library(grid)
 library(lattice)
+library(stringr)
 
 #variables
-dir = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression"
-raw_counts = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/counts_matrices/Raw"
-TPM_counts = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/counts_matrices/TPM"
-figures = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/graphs"
-metadata = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/metadata"
+dir = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/"
+raw_counts = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/V15 Telescope/"
+TPM_counts = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/V15 Counts/"
+figures = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/Figures"
+metadata = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8"
 setwd(dir)
 getwd()
 
 #TPM normalize expression data and extract HML-2, GAPDH, and ACTB counts
 #load in individual expression files for each tissue and assign to a list
-filelist = list.files(path = raw_counts, pattern = "*_Telescope_output.csv") #save data as a list
+filelist = list.files(path = raw_counts, pattern = "*V15_Telescope_output.csv") #save data as a list
 filelist
-datalist = lapply(paste(raw_counts,filelist,sep="/"), read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
+datalist = lapply(filelist, read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
 
 #name each data frame within the list by the tissue specifier within the file name
-filelist_edited = as.character(strsplit(filelist, "_Telescope_output.csv"))
+filelist_edited = as.character(strsplit(filelist, "_V15_Telescope_output.csv"))
 filelist_edited
 names(datalist) = filelist_edited
 head(datalist)
@@ -53,14 +54,14 @@ lapply(datalist,dim)
 
 #confirm runs and tissues match
 for (i in (1:length(datalist))) {
-  Tissue = stringr::str_replace((names(datalist)[[i]]), '_Telescope_output.csv', '')
+  Tissue = stringr::str_replace((names(datalist)[[i]]), '_V15_Telescope_output.csv', '')
   Tissue
   df <- datalist[[i]]
   rownames(df)=df$X
   df$X=NULL
   head(df)
   #load in SRA table for each tissue
-  SRARunTable = read.delim(paste(metadata, paste(Tissue,"SraRunTable.txt",sep="_"), sep = "/"),header=TRUE,sep="\t")
+  SRARunTable = read.delim( paste(Tissue,"SraRunTable.txt",sep="_"), header=TRUE,sep="\t")
   head(SRARunTable)
   
   table(SRARunTable$body_site)
@@ -144,9 +145,9 @@ for (i in (1:length(datalist))) {
 }
 
 #graph HML-2 expression per tissue in a box plot
-HML2_filelist = list.files(path = TPM_counts, pattern = "*_TPM_HML2.csv") #save data as a list
+HML2_filelist = list.files(pattern = "*_TPM_HML2.csv") #save data as a list
 HML2_filelist
-HML2_datalist = lapply(paste(TPM_counts,HML2_filelist,sep="/"), read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
+HML2_datalist = lapply(HML2_filelist, read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
 HML2_datalist
 HML2_filelist_edited = as.character(strsplit(HML2_filelist, "_TPM_HML2.csv"))
 HML2_filelist_edited
@@ -187,24 +188,37 @@ lapply(HML2_datalist_T,dim)
 big_data = do.call(rbind, HML2_datalist_T)
 head(big_data)
 big_data = cbind(big_data, read.table(text=row.names(big_data), sep=".", 
-                                      header=FALSE, col.names = paste0("col", 1:2), stringsAsFactors=FALSE))
+                                      header=FALSE, col.names = paste("col", 1:2), stringsAsFactors=FALSE))
 big_data$col1 = NULL
 rownames(big_data)  = c()
-colnames(big_data) = c("HML2_TPM", "tissue", "SRR_ID")
+colnames(big_data) = c("HML2_TPM", "tissue")
 head(big_data)
-test = big_data[c("SRR_ID","HML2_TPM", "tissue")]
+test = big_data[c("HML2_TPM", "tissue")]
 head(test)
 table(test$tissue)
 write.csv(table(test$tissue), paste(dir, "Tissue_Distribution.csv", sep ="/"))
+
+#Check values on groups
+Cbelum <- test %>% filter(tissue == "Brain_Cerebellum_V15")
+Tibnerve <- test %>% filter(tissue == 'Nerve_Tibial_V15')
+Prostate <- test %>% filter(tissue == "Prostate_V15")
+Thyroid <- test %>% filter(tissue == "Thyroid_V15")
+Testis <- test %>% filter(tissue == "Testis_V15")
+Corart <- test %>% filter(tissue == "Artery_Coronary_V15")
+Esogastro <- test %>% filter(tissue == "Esophagus_Gastroesophageal_Junction_V15")
+Summary(Cbelum)
+
 test$tissue <- as.factor(test$tissue)
 head(test)
+
+test$tissue <- str_sub(test$tissue, end = -5)
 
 # ggplot code
 p<-ggplot(test, aes(x=tissue, y=HML2_TPM)) + geom_boxplot()+
   geom_dotplot(binaxis='y', stackdir='center', binwidth = 1, stackratio = 0.025) + 
   labs(title="Total HML-2 expression in GTEx",x="Tissue", y = "HML2 TPM (sum/sample)")
 p + stat_n_text(angle = 90, size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave(path = figures, filename = "Total HML-2 expression in GTEx.png")
+ggsave(filename = "Total HML-2 expression in GTEx.png", width = 7, height =7 )
 
 #filter TPM expression to >= 1 and graph
 TPM_filter = test[test$HML2_TPM >= 1, ]
@@ -214,4 +228,4 @@ p<-ggplot(TPM_filter, aes(x=tissue, y=HML2_TPM)) + geom_boxplot()+
   labs(title="Total HML-2 expression in GTEx, TPM/sample/tissue >= 1",x="Tissue", y = "HML2 TPM (sum/sample)")
 p + stat_n_text(angle = 90, size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggsave(path = figures,filename = "Total HML-2 expression in GTEx, TPM per sample per tissue >= 1.png")
+ggsave(filename = "Total HML-2 expression in GTEx, TPM per sample per tissue >= 1.png", width = 7.5, height = 7)

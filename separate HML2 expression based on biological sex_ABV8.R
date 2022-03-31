@@ -46,13 +46,13 @@ getwd()
 
 #filter males and females based on y chrom
 #load in individual expression files for each tissue and assign to a list
-filelist = list.files(path =raw_counts, pattern = "*_Telescope_output.csv") #save data as a list
+filelist = list.files(path =raw_counts, pattern = "*V15_Telescope_output.csv") #save data as a list
 filelist
 datalist = lapply(paste(raw_counts,filelist,sep="/"), read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
 datalist
 
 #name each data frame within the list by the tissue specifier within the file name
-filelist_edited = as.character(strsplit(filelist, "_Telescope_output.csv"))
+filelist_edited = as.character(strsplit(filelist, "_V15_Telescope_output.csv"))
 filelist_edited
 names(datalist) = filelist_edited
 head(datalist)
@@ -438,6 +438,8 @@ for (i in (1:length(HML2_datalist))) {
   HML2_df_1 = HML2_df[,!(names(HML2_df) %in% drop)]
   HML2_DF = HML2_df_1[!grepl("GAPDH", HML2_df_1$X),]
   HML2_DF = HML2_DF[!grepl("ACTB", HML2_DF$X),]
+  HML2_DF = HML2_DF[!grepl("8q24.3c", HML2_DF$X),]
+  HML2_DF = HML2_DF[!grepl("17p13.1", HML2_DF$X),]
   HML2_DF$X
   HML2_DF$difference = NULL
   head(HML2_DF)
@@ -508,6 +510,8 @@ HML2_outliersRemoved$tissue <- as.factor(HML2_outliersRemoved$tissue)
 HML2_outliersRemoved$sex <- as.factor(HML2_outliersRemoved$sex)
 head(HML2_outliersRemoved)
 
+HML2_outliersRemoved = drop_na(HML2_outliersRemoved)
+
 write.csv(table(HML2_outliersRemoved$tissue), "Tissue_Distribution_outlierDropped.csv")
 
 #checked the number of samples per tissue to make sure the samples were dropped. 
@@ -517,7 +521,7 @@ table(HML2_outliersRemoved$sex)
 #3677   6090 
 
 #for zoomed in boxplot
-tissues_of_interest = c("Brain_Cerebellum","Brain_Cortex","Breast_Mammary_Tissue", "Lung", "Nerve_Tibial","Thyroid","Prostate", "Testis")
+tissues_of_interest = c("Brain_Cerebellum","Brain_Cortex","Breast_Mammary_Tissue", "Lung", "Nerve_Tibial","Thyroid")
 SpecTiss = HML2_outliersRemoved[HML2_outliersRemoved$tissue %in% tissues_of_interest,]
 
 #get number of males and females for each tissue
@@ -545,7 +549,7 @@ write.csv(big_data_tissue_final,paste(Demographics,"sex_distribution_for_sex_dif
 pdf(paste(sex,"sex differences HML2 expression.pdf",sep="/"), width = 11, height = 8)
 p<-ggplot(test, aes(x=tissue, y=HML2_Sum, fill = sex)) + geom_boxplot(coef = 6, outlier.shape=NA)+
   geom_dotplot(binaxis='y', stackdir='center', binwidth = 1, stackratio = 0.025) + 
-  labs(title="Differences between biological sex in regards to total HML-2 expression in GTEx",x="Tissue", y = "HML2 TPM (sum/sample)")
+  labs(title="Biological Sex",x="Tissue", y = "HML2 TPM (sum/sample)")
 p + stat_n_text(angle = 90, size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
@@ -569,11 +573,11 @@ ggplot(SpecTiss2, aes(x = factor(tissue), y = HML2_Sum)) +
   labs(title="Differences in HML-2 expression in regards to sex in GTEx, zoom in with outlier names",x="Tissue", y = "sample size")
 ggsave(path= sex, file = "sex differences HML2 expression outlier names.png")
 
-ggplot(SpecTiss2, aes(x = factor(tissue), y = HML2_Sum, fill = sex)) +
-  geom_boxplot() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(title="Differences in HML-2 expression in regards to sex in GTEx, zoom in",x="Tissue", y = "sample size")
-ggsave(path= sex, file = "sex differences HML2 expression zoom.png")
+p <-ggplot(SpecTiss2, aes(x = factor(tissue), y = HML2_Sum, fill = sex)) +
+  geom_boxplot(position = position_dodge((width=1))) +
+  labs(title="Biological Sex",x="Tissue", y = "HML2 TPM (sum/sample)")
+p + stat_n_text(angle = 90,size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggsave(path= sex, file = "sex differences HML2 expression zoomwithns.pdf")
 
 #reshape distribution data to plot
 test = big_data_tissue_final[,colnames(big_data_tissue_final) %like% "_percent"]

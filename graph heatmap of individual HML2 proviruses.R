@@ -30,18 +30,18 @@ library(grid)
 library(lattice)
 
 #variables
-dir = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression"
-TPM_counts = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/counts_matrices/TPM"
-figures = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/graphs"
-heatmap = "/Users/huginn/Desktop/HML-2/GTEx_HML2_Expression/heatmap"
+dir = "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/"
+TPM_counts =  "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/V15 Counts/"
+figures =  "~/Documents/Coffin Lab/GTEx_HML2_Expression.nosync/GTEx_V7_V8/Figures/"
+heatmap = 
 setwd(dir)
 getwd()
 
 #graph heatmap of individual HML-2 proviruses
 #load in individual expression files for each tissue and assign to a list
-filelist = list.files(path = TPM_counts, pattern = "*_TPM_HML2.csv") #save data as a list
+filelist = list.files(path = TPM_counts, pattern = "*TPM_HML2.csv") #save data as a list
 filelist
-datalist = lapply(paste(TPM_counts,filelist,sep ="/"), read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
+datalist = lapply(filelist, read.csv, header=TRUE, sep =",", stringsAsFactors=FALSE)
 datalist
 
 #name each data frame within the list by the tissue specifier within the file name
@@ -88,9 +88,21 @@ head(big_data_transf)
 big_data_transf_mod = big_data_transf[big_data_transf$Average >= 1, ]
 for_VLP_analysis = reshape2::dcast(data = big_data_transf_mod,formula = provirus~tissue,fun.aggregate = sum,value.var = "Average")
 
+site_average <- for_VLP_analysis[-c(41:42),]
+site_average <- site_average[-c(10,22,39),]
+site_average[38,2:55] <- colMeans(site_average[,2:55])
+site_average[38,1] <- "Average"
+write.csv(site_average, "site_average.csv")
+
+site_sum <- for_VLP_analysis[-c(41:42),]
+site_sum <- site_sum[-c(10,22,39),]
+site_sum[38,2:55] <- colSums(site_sum[,2:55])
+site_sum[38,1] <- "Sum"
+write.csv(site_sum, "site_sum.csv")
+
 #save data 
-write.csv(big_data_transf, file = paste(heatmap,'HML2_individual_expression_06152020.csv', sep = "/"))
-write.csv(for_VLP_analysis,file=paste(heatmap,"HML2_individual_expression_wide_form_08192020.csv", sep = "/"))
+write.csv(big_data_transf, 'HML2_individual_expression_02042022.csv')
+write.csv(for_VLP_analysis, "HML2_individual_expression_wide_form_02042022.csv")
 
 #get data for heatmap
 HML2_heatmap = big_data_transf[, c("provirus", "Average", "tissue")]
@@ -109,10 +121,11 @@ rownames(HML2_heatmap_3)
 HML2_heatmap_final=rbind(HML2_heatmap_3,HML2_heatmap_2)
 head(HML2_heatmap_final)
 rownames(HML2_heatmap_final)
-write.csv(HML2_heatmap_final, file = paste(heatmap,'HML2_individual_expression_heatmap.csv', sep = "/"))
+HML2_heatmap_final <- HML2_heatmap_final[-c(19,42,83),]
+write.csv(HML2_heatmap_final, 'HML2_individual_expression_heatmap_protrim.csv')
 
 #reorganize provirus order by ascending values
-order = c("1p31.1a", "1p31.1b", "1p34.3", "1p36.21a", "1p36.21c", "1q21.3", "1q22", "1q23.3", "1q24.1", "1q32.2", "1q43", "2q21.1", "3p12.3", "3p25.3", "3q12.3", "3q13.2", "3q21.2", "3q24", "3q27.2", "4p16.1a", "4p16.1b", "4p16.3a", "4p16.3b", "4q13.2", "4q32.1", "4q32.3", "4q35.2", "5p12", "5p13.3", "5q33.2", "5q33.3", "6p11.2", "6p21.1", "6p22.1", "6q14.1", "6q25.1", "7p22.1a", "7p22.1b", "7q11.21", "7q22.2", "7q34", "8p22", "8p23.1a", "8p23.1b", "8p23.1c", "8p23.1d", "8q11.1", "8q24.3a", "8q24.3b", "8q24.3c", "9q34.11", "9q34.3", "10p12.1", "10p14", "10q24.2", "11p15.4", "11q12.1", "11q12.3", "11q22.1", "11q23.3", "12p11.1", "12q13.2", "12q14.1", "12q24.11", "12q24.33", "14q11.2", "14q32.33", "15q25.2", "16p11.2", "16p13.3", "17p13.1", "19p12a", "19p12b", "19p12c", "19p12d", "19p12e", "19p13.3", "19q11", "19q13.12b", "19q13.41", "19q13.42", "20q11.22", "21q21.1", "22q11.21", "22q11.23", "Xq12", "Xq21.33", "Xq28a", "Xq28b", "Yp11.2", "Yq11.23a", "Yq11.23b")
+order = c("1p31.1a", "1p31.1b", "1p34.3", "1p36.21a", "1p36.21c", "1q21.3", "1q22", "1q23.3", "1q24.1", "1q32.2", "1q43", "2q21.1", "3p12.3", "3p25.3", "3q12.3", "3q13.2", "3q21.2", "3q24", "3q27.2", "4p16.1a", "4p16.1b", "4p16.3a", "4p16.3b", "4q13.2", "4q32.1", "4q32.3", "4q35.2", "5p12", "5p13.3", "5q33.2", "5q33.3", "6p11.2", "6p21.1", "6p22.1", "6q14.1", "6q25.1", "7p22.1a", "7p22.1b", "7q11.21", "7q22.2", "7q34", "8p22", "8p23.1a", "8p23.1b", "8p23.1c", "8p23.1d", "8q11.1", "8q24.3a", "8q24.3b","9q34.11", "9q34.3", "10p12.1", "10p14", "10q24.2", "11p15.4", "11q12.1", "11q12.3", "11q22.1", "11q23.3", "12p11.1", "12q13.2", "12q14.1", "12q24.11", "12q24.33", "14q11.2", "14q32.33", "15q25.2", "16p11.2", "16p13.3", "19p12a", "19p12b", "19p12c", "19p12d", "19p12e", "19p13.3", "19q11", "19q13.12b", "19q13.41", "19q13.42", "20q11.22", "22q11.21", "22q11.23", "Xq12", "Xq21.33", "Xq28a", "Xq28b", "Yp11.2", "Yq11.23a", "Yq11.23b")
 HML2_heatmap_3$provirus = rownames(HML2_heatmap_3)
 HML2_heatmap_4 = HML2_heatmap_3 %>%
   dplyr::slice(match(order,provirus))
@@ -124,29 +137,30 @@ HML2_heatmap_3$provirus = NULL
 paletteLength <- 50
 myColor <- colorRampPalette(c("white", "blue"))(paletteLength)
 
-png(paste(figures,"Average individual HML-2 expression in GTEx, with housekeeping genes.png",sep="/"))
+pdf("Average individual HML-2 expression in GTEx, with housekeeping genes.pdf")
 map = pheatmap(as.matrix(HML2_heatmap_final), color = myColor, cluster_rows = FALSE, cluster_cols = FALSE, 
                main = "Average individual HML-2 expression in GTEx, with housekeeping genes", fontsize = 8, fontsize_row = 6, 
                fontsize_col = 6)
 dev.off()
 
-png(paste(figures,"Average individual HML-2 expression in GTEx.png",sep="/"))
+pdf("Average individual HML-2 expression in GTEx.pdf")
 map = pheatmap(as.matrix(HML2_heatmap_4), color = myColor, cluster_rows = FALSE, cluster_cols = FALSE, 
                main = "Average individual HML-2 expression in GTEx",breaks = seq(0,8,by=0.2),fontsize = 8, fontsize_row = 6, 
                fontsize_col = 6)
 dev.off()
 
-order = c("1p31.1a", "1p31.1b", "1p34.3", "1p36.21a", "1p36.21c", "1q21.3", "1q22", "1q23.3", "1q24.1", "1q32.2", "1q43", "2q21.1", "3p12.3", "3p25.3", "3q12.3", "3q13.2", "3q21.2", "3q24", "3q27.2", "4p16.1a", "4p16.1b", "4p16.3a", "4p16.3b", "4q13.2", "4q32.1", "4q32.3", "4q35.2", "5p12", "5p13.3", "5q33.2", "5q33.3", "6p11.2", "6p21.1", "6p22.1", "6q14.1", "6q25.1", "7p22.1a", "7p22.1b", "7q11.21", "7q22.2", "7q34", "8p22", "8p23.1a", "8p23.1b", "8p23.1c", "8p23.1d", "8q11.1", "8q24.3a", "8q24.3b", "8q24.3c", "9q34.11", "9q34.3", "10p12.1", "10p14", "10q24.2", "11p15.4", "11q12.1", "11q12.3", "11q22.1", "11q23.3", "12p11.1", "12q13.2", "12q14.1", "12q24.11", "12q24.33", "14q11.2", "14q32.33", "15q25.2", "16p11.2", "16p13.3", "17p13.1", "19p12a", "19p12b", "19p12c", "19p12d", "19p12e", "19p13.3", "19q11", "19q13.12b", "19q13.41", "19q13.42", "20q11.22", "21q21.1", "22q11.21", "22q11.23", "Xq12", "Xq21.33", "Xq28a", "Xq28b", "Yp11.2", "Yq11.23a", "Yq11.23b")
+order = c("1p31.1a", "1p31.1b", "1p34.3", "1p36.21a", "1p36.21c", "1q21.3", "1q22", "1q23.3", "1q24.1", "1q32.2", "1q43", "2q21.1", "3p12.3", "3p25.3", "3q12.3", "3q13.2", "3q21.2", "3q24", "3q27.2", "4p16.1a", "4p16.1b", "4p16.3a", "4p16.3b", "4q13.2", "4q32.1", "4q32.3", "4q35.2", "5p12", "5p13.3", "5q33.2", "5q33.3", "6p11.2", "6p21.1", "6p22.1", "6q14.1", "6q25.1", "7p22.1a", "7p22.1b", "7q11.21", "7q22.2", "7q34", "8p22", "8p23.1a", "8p23.1b", "8p23.1c", "8p23.1d", "8q11.1", "8q24.3a", "8q24.3b", "9q34.11", "9q34.3", "10p12.1", "10p14", "10q24.2", "11p15.4", "11q12.1", "11q12.3", "11q22.1", "11q23.3", "12p11.1", "12q13.2", "12q14.1", "12q24.11", "12q24.33", "14q11.2", "14q32.33", "15q25.2", "16p11.2", "16p13.3", "19p12a", "19p12b", "19p12c", "19p12d", "19p12e", "19p13.3", "19q11", "19q13.12b", "19q13.41", "19q13.42", "20q11.22", "22q11.21", "22q11.23", "Xq12", "Xq21.33", "Xq28a", "Xq28b", "Yp11.2", "Yq11.23a", "Yq11.23b")
 for_VLP_analysis_mod = for_VLP_analysis %>%
   dplyr::slice(match(order,provirus))
 rownames(for_VLP_analysis_mod)=for_VLP_analysis_mod$provirus
 for_VLP_analysis_mod$provirus = NULL
 for_VLP_analysis_final = for_VLP_analysis_mod[!row.names(for_VLP_analysis_mod)%in%remove,]
 
-write.csv(for_VLP_analysis_final, file = paste(heatmap,"average individual HML-2 expression in GTEx, average >= 1.csv",sep="/"))
+#colnames(for_VLP_analysis_final) <- str_sub(colnames(for_VLP_analysis_final), end = -5)
 
-png(paste(figures,"Average individual HML-2 expression in GTEx, Average >= 1.png",sep="/"))
+write.csv(for_VLP_analysis_final, "average individual HML-2 expression in GTEx, average >= 1.csv")
+
+pdf("Average expression of individual HML-2 proviruses in GTEx, Average >= 1 row.pdf")
 map = pheatmap(as.matrix(for_VLP_analysis_final), color = myColor, cluster_rows = FALSE, cluster_cols = FALSE, 
-               main = "Average individual HML-2 expression in GTEx, Average >= 1",breaks = seq(0,8,by=0.2),fontsize = 8, fontsize_row = 6, 
-               fontsize_col = 6)
+               main = "Average expression of individual HML-2 proviruses in GTEx, Average >= 1",breaks = seq(0,8,by=0.2),show_colnames = TRUE, fontsize = 8, fontsize_row = 6)
 dev.off()

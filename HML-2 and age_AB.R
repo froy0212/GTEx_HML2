@@ -76,6 +76,8 @@ for (i in (1:length(HML2_datalist))) {
   head(HML2_df)[1:5,1:5]
   HML2_DF = HML2_df[!grepl("GAPDH", HML2_df$X),]
   HML2_DF = HML2_DF[!grepl("ACTB", HML2_DF$X),]
+  HML2_DF = HML2_DF[!grepl("8q24.3c", HML2_DF$X),]
+  HML2_DF = HML2_DF[!grepl("17p13.1", HML2_DF$X),]
   HML2_DF$X
   HML2_DF$difference = NULL
   head(HML2_DF)
@@ -162,6 +164,8 @@ table(test$range)
 # 20-35  36-51   52-70 
 # 1222   2760    5796  
 
+test = drop_na(test)
+
 #for zoomed in boxplot
 tissues_of_interest = c("Brain_Cerebellar_Hemisphere", "Brain_Cerebellum","Brain_Cortex","Lung", "Nerve_Tibial","Thyroid","Prostate", "Testis", "Brain_Spinal_cord")
 SpecTiss = test[test$tissue %in% tissues_of_interest,]
@@ -191,21 +195,21 @@ write.csv(big_data_tissue_final,paste(Demographics,"age_range_distribution_for_H
 # ggplot code
 p<-ggplot(test, aes(x=tissue, y=HML2_Sum, fill = range)) + geom_boxplot(coef = 6, outlier.shape=NA)+
   geom_dotplot(binaxis='y', stackdir='center', binwidth = 1, stackratio = 0.025) + 
-  labs(title="Differences in HML-2 expression in regards to age in GTEx",x="Tissue", y = "HML2 TPM (sum/sample)")
+  labs(title="Age",x="Tissue", y = "HML2 TPM (sum/sample)")
 p + stat_n_text(angle = 90, size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave(path = age, file ="Differences in HML-2 expression in regards to age in GTEx.png", width = 8, height = 6)
+ggsave(path = age, file ="Differences in HML-2 expression in regards to age in GTEx.pdf", width = 8, height = 6)
 
 #zoom in on interesting tissues
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 }
 
-p<-ggplot(SpecTiss, aes(x=tissue, y=HML2_Sum, fill = range)) + geom_boxplot()+
-  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1, stackratio = 0.025) + 
-  labs(title="Differences in HML-2 expression in regards to age in GTEx, zoom in",x="Tissue", y = "HML2 TPM (sum/sample)")
+p<-ggplot(SpecTiss, aes(x=tissue, y=HML2_Sum, fill = range)) + geom_boxplot(position= position_dodge(width = .85))+
+  labs(title="Age",x="Tissue", y = "HML2 TPM (sum/sample)")
 p + stat_n_text(angle = 90, size=3) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-ggsave(path = age, file = "Differences in HML-2 expression in regards to age in GTEx, zoom in.png")
+ggsave(path = age, file = "Differences in HML-2 expression in regards to age in GTEx, zoom in.pdf")
 
+#geom_dotplot(binaxis='y', stackdir='center', binwidth = 1, stackratio = 0.025)
 #with outlier names
 rownames(SpecTiss)=SpecTiss$Run
 SpecTiss2 = SpecTiss %>%
